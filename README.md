@@ -1,5 +1,12 @@
 # 📱 App Store Screenshot Generator
 
+## 🚀 Fork Highlights (Ahmet's Version)
+This fork introduces several advanced features and bug fixes over the original repository:
+- **Unlimited Screenshots (IndexedDB)**: Replaced standard `localStorage` with `IndexedDB` via `idb-keyval` to bypass the 5MB browser limit, allowing infinite high-res screenshots without QuotaExceeded errors. Includes seamless backward-compatible migration.
+- **iPad Pro Enhancements**: Added support for **iPad Pro 13" Landscape** and fixed bezel/padding calculations preventing `roundRect` Canvas API crashes during export.
+- **Advanced UI Interactions**: Implemented an elegant **Slide-over Drawer Navigation** for the left sidebar and a **Project Duplication** action for rapid workflow iteration.
+- **Gradient Backgrounds**: Introduced advanced, multi-stop gradient background tools.
+
 A free, open-source tool to create stunning, high-converting screenshots for the Apple App Store and Google Play Store in minutes. Design professional app previews with an intuitive drag-and-drop editor.
 
 🔗 **Live Demo:** [appshots.appstate.xyz](https://appshots.appstate.xyz/)
@@ -15,7 +22,7 @@ A free, open-source tool to create stunning, high-converting screenshots for the
 
 ### 📱 Device Frames
 
-- **6 realistic device mockups** — iPhone 15 Pro Max, iPhone 15 Pro, iPhone 14, iPad Pro 12.9", Samsung Galaxy S24 Ultra, Samsung Galaxy Tab S9
+- **Realistic device mockups** — iPhone 15 Pro Max, iPhone 15 Pro, iPhone 14, iPad Pro 12.9" (Portrait & Landscape), iPad Pro 13" (Landscape), Samsung Galaxy S24 Ultra, Samsung Galaxy Tab S9
 - **Multiple color options per device** — Black Titanium, Natural, Blue, White, and more
 - **Multi-device compositions** — add, select, reorder, and style multiple independent devices inside a single screenshot
 - **Independent device instances** — each device keeps its own screen image, model, color, transform, 3D angles, and shadow
@@ -27,7 +34,7 @@ A free, open-source tool to create stunning, high-converting screenshots for the
 ### 🎨 Backgrounds & Appearance
 
 - **Solid color backgrounds** with a full color picker
-- **Gradient presets** — Sunset, Ocean, Mint, Berry, Royal, Rose
+- **Advanced Gradient Customization** — build custom multi-stop gradients or use presets (Sunset, Ocean, Mint, Berry, Royal, Rose)
 - **Global text color picker**
 
 ### 📝 Rich Text & Fonts
@@ -61,8 +68,8 @@ A free, open-source tool to create stunning, high-converting screenshots for the
 
 ### 📋 Project Management
 
-- **Multiple projects** — create, rename, switch between, and delete projects
-- **Auto-save** — all projects and settings persist to localStorage across sessions
+- **Multiple projects** — create, rename, duplicate, switch between, and delete projects
+- **Unlimited Auto-save (IndexedDB)** — bypasses the 5MB browser limit to securely save massive projects and high-res images directly in IndexedDB across sessions
 - **Reset to defaults** — clear everything and start fresh
 
 ### 📦 Export
@@ -76,6 +83,7 @@ A free, open-source tool to create stunning, high-converting screenshots for the
 
 ### 🖥️ Editor Experience
 
+- **Drawer Sidebar Navigation** — elegant slide-over left menu drawer to maximize your canvas space
 - **Multi-screenshot gallery** — add, remove, and navigate screenshots in a horizontal carousel
 - **Real-time preview** — all changes update instantly on the canvas
 - **Drag-and-drop** — reposition any element by dragging directly on the canvas
