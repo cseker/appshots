@@ -1,112 +1,100 @@
 /**
- * useLocalStorage Hook
+ * useLocalStorage / useStorage Hook
  *
- * Custom hook for persisting editor state to localStorage.
+ * Custom hook for persisting editor state to IndexedDB with localStorage migration.
  * Handles serialization, deserialization, and auto-save functionality.
  */
 
 import { useEffect, useCallback, useRef } from "react";
+import { get, set, del } from "idb-keyval";
 import type { Project } from "../types";
 
-/**
- * Editor state that gets persisted to localStorage
- */
 export interface PersistedEditorState {
-  /** Editor version for migration support */
   version: number;
-  /** All projects */
   projects: Project[];
-  /** Active project ID */
   activeProjectId: string;
-  /** Timestamp of last save */
   lastSaved: number;
 }
 
-/** Current schema version for migration support */
 const CURRENT_VERSION = 2;
-
-/** localStorage key for editor state */
 const STORAGE_KEY = "app-screenshot-editor-state";
-
-/** Debounce delay for auto-save (ms) */
 const AUTO_SAVE_DELAY = 1000;
 
 /**
- * Loads persisted state from localStorage.
- *
- * @returns Persisted state or null if not found/invalid
+ * Loads persisted state asynchronously from IndexedDB.
+ * Falls back to localStorage for seamless migration.
  */
-export const loadPersistedState = (): PersistedEditorState | null => {
+export const loadPersistedStateAsync = async (): Promise<PersistedEditorState | null> => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return null;
+    let state = await get<PersistedEditorState>(STORAGE_KEY);
 
-    const parsed = JSON.parse(stored) as PersistedEditorState;
+    // Migration fallback
+    if (!state) {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as PersistedEditorState;
+        if (parsed.version === CURRENT_VERSION && parsed.projects && Array.isArray(parsed.projects)) {
+          state = parsed;
+          // Save back to IDB
+          await set(STORAGE_KEY, state);
+          console.log("Successfully migrated state from localStorage to IndexedDB.");
+        }
+      }
+    }
 
-    // Version check - if old version, return null to reset
-    if (parsed.version !== CURRENT_VERSION) {
-      console.warn(
-        `Editor state version mismatch: ${parsed.version} !== ${CURRENT_VERSION}. Resetting state.`,
-      );
+    if (!state) return null;
+
+    if (state.version !== CURRENT_VERSION) {
+      console.warn(`Editor state version mismatch: ${state.version} !== ${CURRENT_VERSION}. Resetting state.`);
       return null;
     }
 
-    // Basic validation
-    if (!parsed.projects || !Array.isArray(parsed.projects)) {
+    if (!state.projects || !Array.isArray(state.projects)) {
       return null;
     }
 
-    return parsed;
+    return state;
   } catch (error) {
-    console.error("Failed to load editor state from localStorage:", error);
+    console.error("Failed to load editor state from IndexedDB:", error);
     return null;
   }
 };
 
 /**
- * Saves state to localStorage.
- *
- * @param state - State to persist
+ * Saves state asynchronously to IndexedDB.
  */
-export const savePersistedState = (state: PersistedEditorState): void => {
+export const savePersistedStateAsync = async (state: PersistedEditorState): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    await set(STORAGE_KEY, state);
   } catch (error) {
-    console.error("Failed to save editor state to localStorage:", error);
+    console.error("Failed to save editor state to IndexedDB:", error);
   }
 };
 
-/**
- * Clears persisted state from localStorage.
- */
-export const clearPersistedState = (): void => {
+export const clearPersistedStateAsync = async (): Promise<void> => {
   try {
+    await del(STORAGE_KEY);
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error("Failed to clear editor state from localStorage:", error);
+    console.error("Failed to clear editor state:", error);
   }
 };
 
 interface UseEditorPersistenceOptions {
-  /** All projects */
   projects: Project[];
-  /** Active project ID */
   activeProjectId: string;
+  isLoaded: boolean;
 }
 
 /**
- * useEditorPersistence - Auto-saves editor state to localStorage
- *
- * Debounces saves to avoid excessive writes during rapid changes.
- *
- * @param options - Current editor state values
+ * useEditorPersistence - Auto-saves editor state to IndexedDB
  */
 export const useEditorPersistence = ({
   projects,
   activeProjectId,
+  isLoaded,
 }: UseEditorPersistenceOptions): void => {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isInitialMount = useRef(true);
 
   const saveState = useCallback(() => {
     const state: PersistedEditorState = {
@@ -115,43 +103,37 @@ export const useEditorPersistence = ({
       activeProjectId,
       lastSaved: Date.now(),
     };
-    savePersistedState(state);
+    savePersistedStateAsync(state);
   }, [projects, activeProjectId]);
 
-  // Debounced auto-save on state changes
   useEffect(() => {
-    // Skip initial mount to avoid overwriting loaded state
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
+    // Only save if the data has been loaded from IDB first
+    if (!isLoaded) return;
 
-    // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Schedule new save
     saveTimeoutRef.current = setTimeout(saveState, AUTO_SAVE_DELAY);
 
-    // Cleanup on unmount
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [saveState]);
+  }, [saveState, isLoaded]);
 
-  // Save immediately on page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+      if (isLoaded) {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+        saveState();
       }
-      saveState();
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [saveState]);
+  }, [saveState, isLoaded]);
 };

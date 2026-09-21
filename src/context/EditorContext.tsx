@@ -28,9 +28,9 @@ import {
   getDeviceSpecById,
 } from "../lib/device-instances";
 import {
-  loadPersistedState,
+  loadPersistedStateAsync,
   useEditorPersistence,
-  clearPersistedState,
+  clearPersistedStateAsync,
 } from "../lib/useLocalStorage";
 
 function generateId() {
@@ -45,6 +45,7 @@ interface EditorContextType {
   createProject: (name: string) => void;
   renameProject: (id: string, name: string) => void;
   deleteProject: (id: string) => void;
+  duplicateProject: (id: string) => void;
   switchProject: (id: string) => void;
 
   // State
@@ -247,61 +248,57 @@ const createDefaultProject = (name: string = "My Project"): Project => {
   };
 };
 
-// Load persisted state once on module load
-const persistedState = loadPersistedState();
-
-// Initialize projects from persisted state or create default
-const getInitialProjects = (): Project[] => {
-  if (persistedState?.projects && persistedState.projects.length > 0) {
-    return persistedState.projects.map(normalizeProject);
-  }
-  return [createDefaultProject()];
-};
-
-const getInitialActiveProjectId = (projects: Project[]): string => {
-  if (persistedState?.activeProjectId) {
-    // Verify the project exists
-    const exists = projects.some((p) => p.id === persistedState.activeProjectId);
-    if (exists) return persistedState.activeProjectId;
-  }
-  return projects[0]?.id || generateId();
-};
-
 export const EditorProvider = ({ children }: { children: ReactNode }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
   // Project state
-  const [projects, setProjects] = useState<Project[]>(getInitialProjects);
-  const [activeProjectId, setActiveProjectId] = useState(() =>
-    getInitialActiveProjectId(projects),
-  );
-
-  // Get active project
-  const activeProject =
-    projects.find((p) => p.id === activeProjectId) || projects[0];
+  const defaultProject = createDefaultProject();
+  const [projects, setProjects] = useState<Project[]>([defaultProject]);
+  const [activeProjectId, setActiveProjectId] = useState(defaultProject.id);
 
   // Initialize state from persisted values or defaults
   const [isFontPickerOpen, setIsFontPickerOpen] = useState(false);
   const [isStarModalOpen, setIsStarModalOpen] = useState(false);
-  const [selectedDeviceId, setSelectedDeviceIdState] = useState(
-    activeProject.selectedDeviceId,
-  );
-  const [selectedColorId, setSelectedColorIdState] = useState(
-    activeProject.selectedColorId,
-  );
-  const [exportSizeId, setExportSizeIdState] = useState(
-    activeProject.exportSizeId,
-  );
-  const [screenshots, setScreenshotsState] = useState<Screenshot[]>(
-    activeProject.screenshots,
-  );
-  const [activeScreenshotId, setActiveScreenshotIdState] = useState(
-    activeProject.activeScreenshotId,
-  );
-  const [headlineFontSize, setHeadlineFontSizeState] = useState(
-    activeProject.headlineFontSize,
-  );
-  const [subheadlineFontSize, setSubheadlineFontSizeState] = useState(
-    activeProject.subheadlineFontSize,
-  );
+  const [selectedDeviceId, setSelectedDeviceIdState] = useState(defaultProject.selectedDeviceId);
+  const [selectedColorId, setSelectedColorIdState] = useState(defaultProject.selectedColorId);
+  const [exportSizeId, setExportSizeIdState] = useState(defaultProject.exportSizeId);
+  const [screenshots, setScreenshotsState] = useState<Screenshot[]>(defaultProject.screenshots);
+  const [activeScreenshotId, setActiveScreenshotIdState] = useState(defaultProject.activeScreenshotId);
+  const [headlineFontSize, setHeadlineFontSizeState] = useState(defaultProject.headlineFontSize);
+  const [subheadlineFontSize, setSubheadlineFontSizeState] = useState(defaultProject.subheadlineFontSize);
+
+  useEffect(() => {
+    let isMounted = true;
+    loadPersistedStateAsync().then((state) => {
+      if (!isMounted) return;
+      let initialProjects = [createDefaultProject()];
+      if (state?.projects && state.projects.length > 0) {
+        initialProjects = state.projects.map(normalizeProject);
+      }
+      let initialActiveId = initialProjects[0].id;
+      if (state?.activeProjectId && initialProjects.some((p) => p.id === state.activeProjectId)) {
+        initialActiveId = state.activeProjectId;
+      }
+      
+      const pActiveProject = initialProjects.find((p) => p.id === initialActiveId) || initialProjects[0];
+
+      setProjects(initialProjects);
+      setActiveProjectId(initialActiveId);
+      setSelectedDeviceIdState(pActiveProject.selectedDeviceId);
+      setSelectedColorIdState(pActiveProject.selectedColorId);
+      setExportSizeIdState(pActiveProject.exportSizeId);
+      setScreenshotsState(pActiveProject.screenshots);
+      setActiveScreenshotIdState(pActiveProject.activeScreenshotId);
+      setHeadlineFontSizeState(pActiveProject.headlineFontSize);
+      setSubheadlineFontSizeState(pActiveProject.subheadlineFontSize);
+      
+      setIsLoaded(true);
+    });
+    return () => { isMounted = false; };
+  }, []);
+
+  // Get active project
+  const activeProject =
+    projects.find((p) => p.id === activeProjectId) || projects[0];
 
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(
     null,
@@ -364,6 +361,7 @@ export const EditorProvider = ({ children }: { children: ReactNode }) => {
   useEditorPersistence({
     projects,
     activeProjectId,
+    isLoaded,
   });
 
   // Wrapper functions that update both local state and project
@@ -447,6 +445,22 @@ export const EditorProvider = ({ children }: { children: ReactNode }) => {
         switchProject(remaining[0].id);
       }
     }
+  };
+
+  const duplicateProject = (id: string) => {
+    const projectToCopy = projects.find((p) => p.id === id);
+    if (!projectToCopy) return;
+
+    const newProject: Project = {
+      ...JSON.parse(JSON.stringify(projectToCopy)),
+      id: generateId(),
+      name: `${projectToCopy.name} (Copy)`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    setProjects((prev) => [...prev, newProject]);
+    switchProject(newProject.id);
   };
 
   const switchProject = (id: string) => {
@@ -994,7 +1008,7 @@ export const EditorProvider = ({ children }: { children: ReactNode }) => {
    * Resets the editor to default state and clears localStorage
    */
   const resetEditor = () => {
-    clearPersistedState();
+    clearPersistedStateAsync();
     const defaultProject = createDefaultProject();
     setProjects([defaultProject]);
     setActiveProjectId(defaultProject.id);
@@ -1009,6 +1023,17 @@ export const EditorProvider = ({ children }: { children: ReactNode }) => {
     setIsStarModalOpen(false);
   };
 
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col h-screen bg-[#0a0a0a] text-white overflow-hidden items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-zinc-800 border-t-white rounded-full animate-spin mb-4"></div>
+          <p className="text-zinc-400 mt-4">Loading your workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <EditorContext.Provider
       value={{
@@ -1019,6 +1044,7 @@ export const EditorProvider = ({ children }: { children: ReactNode }) => {
         createProject,
         renameProject,
         deleteProject,
+        duplicateProject,
         switchProject,
 
         isFontPickerOpen,

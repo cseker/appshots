@@ -10,11 +10,14 @@ import { getButtonBackground } from "./utils";
 
 interface DeviceButtonProps {
   /** Button position on the device frame */
-  position: "left" | "right";
-  /** CSS top position (e.g., "18%") */
-  top: string;
-  /** CSS height (e.g., "8%") */
-  height: string;
+  position: "left" | "right" | "top" | "bottom";
+  /** CSS top/bottom/left/right positioning */
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+  /** Length of the button (height for side buttons, width for top/bottom buttons) */
+  length: string;
   /** Device color configuration for styling */
   color: DeviceColor;
   /** Whether to render in 3D style */
@@ -23,86 +26,106 @@ interface DeviceButtonProps {
 
 /**
  * DeviceButton - Reusable device button component
- *
- * In flat mode, renders a simple strip.
- * In 3D mode, renders a protruding button with metallic shading,
- * rounded pill shape, highlight/shadow layers, and depth.
  */
 export const DeviceButton = ({
   position,
   top,
-  height,
+  bottom,
+  left,
+  right,
+  length,
   color,
   is3d = false,
 }: DeviceButtonProps) => {
   const isRight = position === "right";
+  const isLeft = position === "left";
+  const isTop = position === "top";
+  const isBottom = position === "bottom";
+
   const bg = getButtonBackground(color, position);
 
+  const style: React.CSSProperties = {
+    background: bg,
+    top,
+    bottom,
+    left,
+    right,
+  };
+
+  const isVertical = isLeft || isRight;
+
+  if (isVertical) {
+    style.height = length;
+    style.width = "0.8%";
+    if (isLeft) style.left = "-0.8%";
+    if (isRight) style.right = "-0.8%";
+  } else {
+    style.width = length;
+    style.height = "0.8%";
+    if (isTop) style.top = "-0.8%";
+    if (isBottom) style.bottom = "-0.8%";
+  }
+
   if (is3d) {
-    // Realistic 3D button with depth and metallic shading
+    if (isVertical) {
+      style.width = "0.9%";
+      style.borderRadius = isRight ? "0 3px 3px 0" : "3px 0 0 3px";
+      if (isLeft) style.left = "-0.9%";
+      if (isRight) style.right = "-0.9%";
+    } else {
+      style.height = "0.9%";
+      style.borderRadius = isBottom ? "0 0 3px 3px" : "3px 3px 0 0";
+      if (isTop) style.top = "-0.9%";
+      if (isBottom) style.bottom = "-0.9%";
+    }
+
     return (
       <div
         className="absolute"
         style={{
-          top,
-          height,
-          width: "0.9%",
-          ...(isRight ? { right: "-0.9%" } : { left: "-0.9%" }),
-          borderRadius: isRight ? "0 3px 3px 0" : "3px 0 0 3px",
-          background: bg,
+          ...style,
           transformStyle: "preserve-3d",
           transform: `translateZ(4px)`,
         }}
       >
-        {/* Button body */}
         <div
           className="absolute inset-0"
           style={{
             borderRadius: "inherit",
             background: bg,
-            boxShadow: isRight
-              ? `inset -1px 0 1px rgba(255,255,255,0.25),
-                 inset 1px 0 2px rgba(0,0,0,0.2),
-                 inset 0 1px 1px rgba(255,255,255,0.15),
-                 inset 0 -1px 1px rgba(0,0,0,0.15),
-                 2px 0 4px rgba(0,0,0,0.3)`
-              : `inset 1px 0 1px rgba(255,255,255,0.25),
-                 inset -1px 0 2px rgba(0,0,0,0.2),
-                 inset 0 1px 1px rgba(255,255,255,0.15),
-                 inset 0 -1px 1px rgba(0,0,0,0.15),
-                 -2px 0 4px rgba(0,0,0,0.3)`,
-          }}
-        />
-        {/* Top highlight strip */}
-        <div
-          className="absolute"
-          style={{
-            top: "8%",
-            bottom: "8%",
-            width: "40%",
-            ...(isRight ? { left: "10%" } : { right: "10%" }),
-            borderRadius: "1px",
-            background: "linear-gradient(to bottom, rgba(255,255,255,0.35), rgba(255,255,255,0.05))",
+            boxShadow: isVertical
+              ? (isRight
+                  ? `inset -1px 0 1px rgba(255,255,255,0.25), inset 1px 0 2px rgba(0,0,0,0.2), 2px 0 4px rgba(0,0,0,0.3)`
+                  : `inset 1px 0 1px rgba(255,255,255,0.25), inset -1px 0 2px rgba(0,0,0,0.2), -2px 0 4px rgba(0,0,0,0.3)`)
+              : (isBottom
+                  ? `inset 0 -1px 1px rgba(255,255,255,0.25), inset 0 1px 2px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3)`
+                  : `inset 0 1px 1px rgba(255,255,255,0.25), inset 0 -1px 2px rgba(0,0,0,0.2), 0 -2px 4px rgba(0,0,0,0.3)`),
           }}
         />
       </div>
     );
   }
 
-  // Flat mode — simple strip
-  return (
-    <div
-      className={`absolute ${isRight ? "-right-[0.8%]" : "-left-[0.8%]"} w-[0.8%] ${isRight ? "rounded-r-xs" : "rounded-l-xs"}`}
-      style={{
-        top,
-        height,
-        background: bg,
-        boxShadow: isRight
-          ? "inset 1px 0 2px rgba(255,255,255,0.3), 2px 0 4px rgba(0,0,0,0.2)"
-          : "inset -1px 0 2px rgba(255,255,255,0.3), -2px 0 4px rgba(0,0,0,0.2)",
-      }}
-    />
-  );
+  // Flat mode
+  if (isVertical) {
+    style.boxShadow = isRight
+      ? "inset 1px 0 2px rgba(255,255,255,0.3), 2px 0 4px rgba(0,0,0,0.2)"
+      : "inset -1px 0 2px rgba(255,255,255,0.3), -2px 0 4px rgba(0,0,0,0.2)";
+  } else {
+    style.boxShadow = isBottom
+      ? "inset 0 1px 2px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.2)"
+      : "inset 0 -1px 2px rgba(255,255,255,0.3), 0 -2px 4px rgba(0,0,0,0.2)";
+  }
+
+  const roundedClass = isRight
+    ? "rounded-r-xs"
+    : isLeft
+      ? "rounded-l-xs"
+      : isTop
+        ? "rounded-t-xs"
+        : "rounded-b-xs";
+
+  return <div className={`absolute ${roundedClass}`} style={style} />;
 };
 
 interface DeviceButtonsProps {
@@ -121,28 +144,51 @@ interface DeviceButtonsProps {
 export const IPhoneButtons = ({ color, is3d }: DeviceButtonsProps) => (
   <>
     {/* Side button (power) - right */}
-    <DeviceButton position="right" top="18%" height="8%" color={color} is3d={is3d} />
+    <DeviceButton position="right" top="18%" length="8%" color={color} is3d={is3d} />
     {/* Silent switch - left */}
-    <DeviceButton position="left" top="15%" height="4%" color={color} is3d={is3d} />
+    <DeviceButton position="left" top="15%" length="4%" color={color} is3d={is3d} />
     {/* Volume up - left */}
-    <DeviceButton position="left" top="21%" height="6%" color={color} is3d={is3d} />
+    <DeviceButton position="left" top="21%" length="6%" color={color} is3d={is3d} />
     {/* Volume down - left */}
-    <DeviceButton position="left" top="28%" height="6%" color={color} is3d={is3d} />
+    <DeviceButton position="left" top="28%" length="6%" color={color} is3d={is3d} />
+  </>
+);
+
+export const SamsungButtons = ({ color, is3d }: DeviceButtonsProps) => (
+  <>
+    {/* Power button - right */}
+    <DeviceButton position="right" top="22%" length="5%" color={color} is3d={is3d} />
+    {/* Volume up - right */}
+    <DeviceButton position="right" top="29%" length="6%" color={color} is3d={is3d} />
+    {/* Volume down - right */}
+    <DeviceButton position="right" top="36%" length="6%" color={color} is3d={is3d} />
   </>
 );
 
 /**
- * SamsungButtons - Samsung button layout
- *
- * All buttons on the right side: Power, Volume up, Volume down
+ * IPadButtons - iPad Pro button layout (Portrait)
+ * Power on top right edge, volume on right edge near top
  */
-export const SamsungButtons = ({ color, is3d }: DeviceButtonsProps) => (
+export const IPadButtons = ({ color, is3d }: DeviceButtonsProps) => (
   <>
-    {/* Power button - right */}
-    <DeviceButton position="right" top="22%" height="5%" color={color} is3d={is3d} />
-    {/* Volume up - right */}
-    <DeviceButton position="right" top="29%" height="6%" color={color} is3d={is3d} />
-    {/* Volume down - right */}
-    <DeviceButton position="right" top="36%" height="6%" color={color} is3d={is3d} />
+    {/* Power button - top edge, right side */}
+    <DeviceButton position="top" right="8%" length="6%" color={color} is3d={is3d} />
+    {/* Volume up/down - right edge, near top */}
+    <DeviceButton position="right" top="6%" length="4%" color={color} is3d={is3d} />
+    <DeviceButton position="right" top="11%" length="4%" color={color} is3d={is3d} />
+  </>
+);
+
+/**
+ * IPadLandscapeButtons - iPad Pro button layout (Landscape)
+ * Power on left edge near top, volume on top edge near left
+ */
+export const IPadLandscapeButtons = ({ color, is3d }: DeviceButtonsProps) => (
+  <>
+    {/* Power button - left edge, near top */}
+    <DeviceButton position="left" top="8%" length="6%" color={color} is3d={is3d} />
+    {/* Volume up/down - top edge, near left */}
+    <DeviceButton position="top" left="6%" length="4%" color={color} is3d={is3d} />
+    <DeviceButton position="top" left="11%" length="4%" color={color} is3d={is3d} />
   </>
 );

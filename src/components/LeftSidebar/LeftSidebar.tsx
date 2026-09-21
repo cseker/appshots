@@ -28,7 +28,12 @@ import { STYLES } from "./constants";
  * @example
  * <LeftSidebar />
  */
-export const LeftSidebar = () => {
+interface LeftSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const LeftSidebar = ({ isOpen, onClose }: LeftSidebarProps) => {
   const {
     selectedDeviceId,
     setSelectedDeviceId,
@@ -48,8 +53,24 @@ export const LeftSidebar = () => {
   };
 
   return (
-    <aside className={STYLES.sidebar}>
-      <SidebarHeader />
+    <>
+      {/* Backdrop overlay */}
+      <div 
+        className={`fixed inset-0 bg-black/50 z-[90] transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`} 
+        onClick={onClose} 
+      />
+
+      {/* Drawer */}
+      <aside className={`${STYLES.sidebar} ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="relative">
+          <SidebarHeader />
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-md transition-colors text-zinc-400 hover:text-white"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
 
       {/* Project Switcher */}
       <div className="px-4 pb-4 border-b border-zinc-800">
@@ -75,5 +96,6 @@ export const LeftSidebar = () => {
         />
       </div>
     </aside>
+    </>
   );
 };

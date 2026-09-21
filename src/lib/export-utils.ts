@@ -321,7 +321,7 @@ const renderDeviceToOffscreen = async (
   const screenY = dY + bezelThickness;
   const screenW = dW - bezelThickness * 2;
   const screenH = dH - bezelThickness * 2;
-  const screenRadius = frameRadius - bezelThickness;
+  const screenRadius = Math.max(0, frameRadius - bezelThickness);
 
   ctx.fillStyle = "#1c1c1e";
   ctx.beginPath();
@@ -426,8 +426,9 @@ const drawDeviceInstance = async (
   const cornerRadiusX = deviceWidthPx * outerRadiusXPct;
   const cornerRadiusY = deviceHeightPx * outerRadiusYPct;
   const frameRadius = Math.min(cornerRadiusX, cornerRadiusY);
-  const bezelThickness = deviceWidthPx * 0.012;
+  const bezelThickness = (selectedDevice.screenInset.top / selectedDevice.width) * deviceWidthPx;
   const isSamsungDevice = selectedDevice.id.startsWith("samsung-");
+  const isIpad = selectedDevice.id.includes("ipad");
 
   if (device.style === "3d") {
     const rotYDeg = device.rotateY ?? -15;
@@ -647,15 +648,17 @@ const drawDeviceInstance = async (
       ctx.restore();
     };
 
-    if (isSamsungDevice) {
-      draw3DButton("right", 0.22, 0.05);
-      draw3DButton("right", 0.29, 0.06);
-      draw3DButton("right", 0.36, 0.06);
-    } else {
-      draw3DButton("right", 0.18, 0.08);
-      draw3DButton("left", 0.15, 0.04);
-      draw3DButton("left", 0.21, 0.06);
-      draw3DButton("left", 0.28, 0.06);
+    if (!isIpad) {
+      if (isSamsungDevice) {
+        draw3DButton("right", 0.22, 0.05);
+        draw3DButton("right", 0.29, 0.06);
+        draw3DButton("right", 0.36, 0.06);
+      } else {
+        draw3DButton("right", 0.18, 0.08);
+        draw3DButton("left", 0.15, 0.04);
+        draw3DButton("left", 0.21, 0.06);
+        draw3DButton("left", 0.28, 0.06);
+      }
     }
 
     return;
@@ -708,57 +711,59 @@ const drawDeviceInstance = async (
     ctx.restore();
   };
 
-  if (isSamsungDevice) {
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.22,
-      btnWidth,
-      deviceHeightPx * 0.05,
-      true,
-    );
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.29,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      true,
-    );
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.36,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      true,
-    );
-  } else {
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.18,
-      btnWidth,
-      deviceHeightPx * 0.08,
-      true,
-    );
-    drawButton(
-      deviceX - btnWidth,
-      deviceY + deviceHeightPx * 0.15,
-      btnWidth,
-      deviceHeightPx * 0.04,
-      false,
-    );
-    drawButton(
-      deviceX - btnWidth,
-      deviceY + deviceHeightPx * 0.21,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      false,
-    );
-    drawButton(
-      deviceX - btnWidth,
-      deviceY + deviceHeightPx * 0.28,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      false,
-    );
+  if (!isIpad) {
+    if (isSamsungDevice) {
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.22,
+        btnWidth,
+        deviceHeightPx * 0.05,
+        true,
+      );
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.29,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        true,
+      );
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.36,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        true,
+      );
+    } else {
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.18,
+        btnWidth,
+        deviceHeightPx * 0.08,
+        true,
+      );
+      drawButton(
+        deviceX - btnWidth,
+        deviceY + deviceHeightPx * 0.15,
+        btnWidth,
+        deviceHeightPx * 0.04,
+        false,
+      );
+      drawButton(
+        deviceX - btnWidth,
+        deviceY + deviceHeightPx * 0.21,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        false,
+      );
+      drawButton(
+        deviceX - btnWidth,
+        deviceY + deviceHeightPx * 0.28,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        false,
+      );
+    }
   }
 
   ctx.save();
@@ -822,7 +827,7 @@ const drawDeviceInstance = async (
   const screenY = deviceY + bezelThickness;
   const screenWidthPx = deviceWidthPx - bezelThickness * 2;
   const screenHeightPx = deviceHeightPx - bezelThickness * 2;
-  const screenRadius = frameRadius - bezelThickness;
+  const screenRadius = Math.max(0, frameRadius - bezelThickness);
 
   ctx.fillStyle = "#1c1c1e";
   ctx.beginPath();
