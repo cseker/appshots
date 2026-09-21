@@ -134,9 +134,44 @@ export const devices: DeviceSpec[] = [
     label: 'iPad Pro 12.9"',
     width: 2048,
     height: 2732,
-    screenInset: { top: 40, right: 40, bottom: 40, left: 40 },
+    screenInset: { top: 70, right: 70, bottom: 70, left: 70 },
     cornerRadius: 50,
     frameRadius: { outer: "3%/2.5%", inner: "2.5%/2%" },
+    notchWidth: 0,
+    notchHeight: 0,
+    hasIsland: false,
+    colors: [
+      {
+        id: "black",
+        label: "Black",
+        frame: "#1c1c1e",
+        frameColors: ["#2c2c2e", "#1c1c1e", "#0d0d0d", "#1c1c1e", "#2c2c2e"],
+        screen: "#000",
+      },
+      {
+        id: "space-gray",
+        label: "Space Gray",
+        frame: "#4e4e50",
+        frameColors: ["#636365", "#4e4e50", "#3a3a3c", "#4e4e50", "#636365"],
+        screen: "#000",
+      },
+      {
+        id: "silver",
+        label: "Silver",
+        frame: "#e0e0e0",
+        frameColors: ["#ffffff", "#e0e0e0", "#d1d1d6", "#e0e0e0", "#ffffff"],
+        screen: "#000",
+      },
+    ],
+  },
+  {
+    id: "ipad-pro-12-9-landscape",
+    label: 'iPad Pro 12.9" (Landscape)',
+    width: 2732,
+    height: 2048,
+    screenInset: { top: 70, right: 70, bottom: 70, left: 70 },
+    cornerRadius: 50,
+    frameRadius: { outer: "2.5%/3%", inner: "2%/2.5%" },
     notchWidth: 0,
     notchHeight: 0,
     hasIsland: false,
@@ -237,12 +272,12 @@ export const devices: DeviceSpec[] = [
 ];
 
 export const gradientPresets: GradientPreset[] = [
-  { id: "sunset", label: "Sunset", from: "#ff7e5f", to: "#feb47b" },
-  { id: "ocean", label: "Ocean", from: "#2b5876", to: "#4e4376" },
-  { id: "mint", label: "Mint", from: "#00b09b", to: "#96c93d" },
-  { id: "berry", label: "Berry", from: "#e1eec3", to: "#f05053" },
-  { id: "royal", label: "Royal", from: "#141E30", to: "#243B55" },
-  { id: "rose", label: "Rose", from: "#f4c4f3", to: "#fc67fa" },
+  { id: "sunset", label: "Sunset", from: "#ff7e5f", to: "#feb47b", stops: [{ id: "s1", color: "#ff7e5f", position: 0 }, { id: "s2", color: "#feb47b", position: 100 }] },
+  { id: "ocean", label: "Ocean", from: "#2b5876", to: "#4e4376", stops: [{ id: "s1", color: "#2b5876", position: 0 }, { id: "s2", color: "#4e4376", position: 100 }] },
+  { id: "mint", label: "Mint", from: "#00b09b", to: "#96c93d", stops: [{ id: "s1", color: "#00b09b", position: 0 }, { id: "s2", color: "#96c93d", position: 100 }] },
+  { id: "berry", label: "Berry", from: "#e1eec3", to: "#f05053", stops: [{ id: "s1", color: "#e1eec3", position: 0 }, { id: "s2", color: "#f05053", position: 100 }] },
+  { id: "royal", label: "Royal", from: "#141E30", to: "#243B55", stops: [{ id: "s1", color: "#141E30", position: 0 }, { id: "s2", color: "#243B55", position: 100 }] },
+  { id: "rose", label: "Rose", from: "#f4c4f3", to: "#fc67fa", stops: [{ id: "s1", color: "#f4c4f3", position: 0 }, { id: "s2", color: "#fc67fa", position: 100 }] },
 ];
 
 export const exportSizes: ExportSize[] = [
@@ -259,5 +294,8 @@ export const exportSizes: ExportSize[] = [
     height: 2688,
   },
   { id: "5.5", label: "5.5 inch (iPhone 8 Plus)", width: 1242, height: 2208 },
-  { id: "ipad", label: "12.9 inch (iPad Pro)", width: 2048, height: 2732 },
+  { id: "ipad-12-9", label: '12.9" (iPad Pro)', width: 2048, height: 2732 },
+  { id: "ipad-12-9-landscape", label: '12.9" Landscape (iPad Pro)', width: 2732, height: 2048 },
+  { id: "ipad-13", label: '13" (iPad Pro)', width: 2064, height: 2752 },
+  { id: "ipad-13-landscape", label: '13" Landscape (iPad Pro)', width: 2752, height: 2064 },
 ];

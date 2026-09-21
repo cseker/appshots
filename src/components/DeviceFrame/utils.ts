@@ -48,13 +48,14 @@ export const getFrameBackground = (color: DeviceColor): string => {
  */
 export const getButtonBackground = (
   color: DeviceColor,
-  direction: "left" | "right",
+  direction: "left" | "right" | "top" | "bottom",
 ): string => {
   if (color.frameColors) {
     const [first, , third] = color.frameColors;
-    return direction === "right"
-      ? `linear-gradient(to right, ${third}, ${first})`
-      : `linear-gradient(to left, ${third}, ${first})`;
+    if (direction === "right") return `linear-gradient(to right, ${third}, ${first})`;
+    if (direction === "left") return `linear-gradient(to left, ${third}, ${first})`;
+    if (direction === "top") return `linear-gradient(to top, ${third}, ${first})`;
+    if (direction === "bottom") return `linear-gradient(to bottom, ${third}, ${first})`;
   }
   return color.frame;
 };

@@ -321,7 +321,7 @@ const renderDeviceToOffscreen = async (
   const screenY = dY + bezelThickness;
   const screenW = dW - bezelThickness * 2;
   const screenH = dH - bezelThickness * 2;
-  const screenRadius = frameRadius - bezelThickness;
+  const screenRadius = Math.max(0, frameRadius - bezelThickness);
 
   ctx.fillStyle = "#1c1c1e";
   ctx.beginPath();
@@ -426,8 +426,9 @@ const drawDeviceInstance = async (
   const cornerRadiusX = deviceWidthPx * outerRadiusXPct;
   const cornerRadiusY = deviceHeightPx * outerRadiusYPct;
   const frameRadius = Math.min(cornerRadiusX, cornerRadiusY);
-  const bezelThickness = deviceWidthPx * 0.012;
+  const bezelThickness = (selectedDevice.screenInset.top / selectedDevice.width) * deviceWidthPx;
   const isSamsungDevice = selectedDevice.id.startsWith("samsung-");
+  const isIpad = selectedDevice.id.includes("ipad");
 
   if (device.style === "3d") {
     const rotYDeg = device.rotateY ?? -15;
@@ -647,15 +648,17 @@ const drawDeviceInstance = async (
       ctx.restore();
     };
 
-    if (isSamsungDevice) {
-      draw3DButton("right", 0.22, 0.05);
-      draw3DButton("right", 0.29, 0.06);
-      draw3DButton("right", 0.36, 0.06);
-    } else {
-      draw3DButton("right", 0.18, 0.08);
-      draw3DButton("left", 0.15, 0.04);
-      draw3DButton("left", 0.21, 0.06);
-      draw3DButton("left", 0.28, 0.06);
+    if (!isIpad) {
+      if (isSamsungDevice) {
+        draw3DButton("right", 0.22, 0.05);
+        draw3DButton("right", 0.29, 0.06);
+        draw3DButton("right", 0.36, 0.06);
+      } else {
+        draw3DButton("right", 0.18, 0.08);
+        draw3DButton("left", 0.15, 0.04);
+        draw3DButton("left", 0.21, 0.06);
+        draw3DButton("left", 0.28, 0.06);
+      }
     }
 
     return;
@@ -708,57 +711,59 @@ const drawDeviceInstance = async (
     ctx.restore();
   };
 
-  if (isSamsungDevice) {
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.22,
-      btnWidth,
-      deviceHeightPx * 0.05,
-      true,
-    );
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.29,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      true,
-    );
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.36,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      true,
-    );
-  } else {
-    drawButton(
-      deviceX + deviceWidthPx,
-      deviceY + deviceHeightPx * 0.18,
-      btnWidth,
-      deviceHeightPx * 0.08,
-      true,
-    );
-    drawButton(
-      deviceX - btnWidth,
-      deviceY + deviceHeightPx * 0.15,
-      btnWidth,
-      deviceHeightPx * 0.04,
-      false,
-    );
-    drawButton(
-      deviceX - btnWidth,
-      deviceY + deviceHeightPx * 0.21,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      false,
-    );
-    drawButton(
-      deviceX - btnWidth,
-      deviceY + deviceHeightPx * 0.28,
-      btnWidth,
-      deviceHeightPx * 0.06,
-      false,
-    );
+  if (!isIpad) {
+    if (isSamsungDevice) {
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.22,
+        btnWidth,
+        deviceHeightPx * 0.05,
+        true,
+      );
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.29,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        true,
+      );
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.36,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        true,
+      );
+    } else {
+      drawButton(
+        deviceX + deviceWidthPx,
+        deviceY + deviceHeightPx * 0.18,
+        btnWidth,
+        deviceHeightPx * 0.08,
+        true,
+      );
+      drawButton(
+        deviceX - btnWidth,
+        deviceY + deviceHeightPx * 0.15,
+        btnWidth,
+        deviceHeightPx * 0.04,
+        false,
+      );
+      drawButton(
+        deviceX - btnWidth,
+        deviceY + deviceHeightPx * 0.21,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        false,
+      );
+      drawButton(
+        deviceX - btnWidth,
+        deviceY + deviceHeightPx * 0.28,
+        btnWidth,
+        deviceHeightPx * 0.06,
+        false,
+      );
+    }
   }
 
   ctx.save();
@@ -822,7 +827,7 @@ const drawDeviceInstance = async (
   const screenY = deviceY + bezelThickness;
   const screenWidthPx = deviceWidthPx - bezelThickness * 2;
   const screenHeightPx = deviceHeightPx - bezelThickness * 2;
-  const screenRadius = frameRadius - bezelThickness;
+  const screenRadius = Math.max(0, frameRadius - bezelThickness);
 
   ctx.fillStyle = "#1c1c1e";
   ctx.beginPath();
@@ -923,18 +928,67 @@ export const exportScreenshots = async ({
 
     // Draw background
     if (screenshot.backgroundMode === "gradient") {
-      const preset =
-        gradientPresets.find((p) => p.id === screenshot.gradientPresetId) ??
-        gradientPresets[0];
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, preset.from);
-      gradient.addColorStop(1, preset.to);
+      const from = screenshot.gradientFrom ?? gradientPresets[0].from;
+      const to = screenshot.gradientTo ?? gradientPresets[0].to;
+      const type = screenshot.gradientType ?? "linear";
+      let gradient: CanvasGradient;
+      if (type === "radial") {
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const radius = Math.max(canvas.width, canvas.height) / 2;
+        gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      } else {
+        const angle = screenshot.gradientAngle ?? 180;
+        const angleRad = ((angle - 90) * Math.PI) / 180;
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const len = Math.max(canvas.width, canvas.height) / 2;
+        gradient = ctx.createLinearGradient(
+          cx - Math.cos(angleRad) * len,
+          cy - Math.sin(angleRad) * len,
+          cx + Math.cos(angleRad) * len,
+          cy + Math.sin(angleRad) * len,
+        );
+      }
+      // Use gradientStops if available, fallback to from/to for old data
+      const stops =
+        screenshot.gradientStops && screenshot.gradientStops.length >= 2
+          ? [...screenshot.gradientStops].sort((a, b) => a.position - b.position)
+          : [
+              { id: "f", color: from, position: 0 },
+              { id: "t", color: to, position: 100 },
+            ];
+      for (const stop of stops) {
+        gradient.addColorStop(stop.position / 100, stop.color);
+      }
       ctx.fillStyle = gradient;
     } else {
       ctx.fillStyle = screenshot.backgroundColor;
     }
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Draw noise overlay
+    const noise = screenshot.backgroundNoise ?? 0;
+    if (noise > 0) {
+      const noiseCanvas = document.createElement("canvas");
+      noiseCanvas.width = canvas.width;
+      noiseCanvas.height = canvas.height;
+      const noiseCtx = noiseCanvas.getContext("2d")!;
+      const imageData = noiseCtx.createImageData(canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const v = Math.random() * 255;
+        data[i] = v;
+        data[i + 1] = v;
+        data[i + 2] = v;
+        data[i + 3] = 255;
+      }
+      noiseCtx.putImageData(imageData, 0, 0);
+      ctx.save();
+      ctx.globalAlpha = noise / 100;
+      ctx.drawImage(noiseCanvas, 0, 0);
+      ctx.restore();
+    }
     // Helper to draw overlay images
     const drawOverlayImages = async (layer: "behind" | "front") => {
       const images = screenshot.overlayImages.filter(

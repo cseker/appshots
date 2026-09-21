@@ -5,7 +5,7 @@ import { FontPicker } from "./FontPicker";
 import { GitHubStarModal } from "./GitHubStarModal";
 import { useEditor } from "../context/EditorContext";
 import { GITHUB_REPO_URL } from "../constants";
-import { Star, X } from "lucide-react";
+import { Star, X, Menu } from "lucide-react";
 import { useState } from "react";
 
 export const EditorLayout = () => {
@@ -19,6 +19,7 @@ export const EditorLayout = () => {
   } = useEditor();
 
   const [showBanner, setShowBanner] = useState(true);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0a] text-white overflow-hidden">
@@ -44,8 +45,19 @@ export const EditorLayout = () => {
           </button>
         </div>
       )}
-      <div className="flex flex-1 overflow-hidden">
-        <LeftSidebar />
+      <div className="flex flex-1 overflow-hidden relative">
+        <button
+          onClick={() => setIsLeftSidebarOpen(true)}
+          className="absolute top-4 left-4 z-[90] p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md shadow-lg transition-colors"
+          title="Open Menu"
+        >
+          <Menu size={20} />
+        </button>
+
+        <LeftSidebar 
+          isOpen={isLeftSidebarOpen} 
+          onClose={() => setIsLeftSidebarOpen(false)} 
+        />
         <CanvasPreview />
         <RightSidebar />
         <FontPicker

@@ -49,6 +49,10 @@ export const DeviceFrame = ({
   // Device type detection
   const isSamsungDevice = selectedDevice.id.startsWith("samsung-");
   const isSamsungTablet = selectedDevice.id.includes("tab");
+  const isIpad = selectedDevice.id.includes("ipad");
+
+  // Calculate true bezel thickness based on device dimensions
+  const bezelPadding = `${(selectedDevice.screenInset.top / selectedDevice.width) * 100}%`;
 
   // Memoized styles for performance
   const frameStyle = useMemo(
@@ -56,7 +60,7 @@ export const DeviceFrame = ({
       aspectRatio: `${selectedDevice.width} / ${selectedDevice.height}`,
       background: getFrameBackground(selectedColor),
       borderRadius: selectedDevice.frameRadius.outer,
-      padding: "1.2%",
+      padding: bezelPadding,
       boxShadow: SHADOWS.frame,
       border: "1px solid rgba(0,0,0,0.1)",
     }),
@@ -89,7 +93,7 @@ export const DeviceFrame = ({
       {/* Physical buttons */}
       {isSamsungDevice ? (
         <SamsungButtons color={selectedColor} />
-      ) : (
+      ) : isIpad ? null : (
         <IPhoneButtons color={selectedColor} />
       )}
     </div>

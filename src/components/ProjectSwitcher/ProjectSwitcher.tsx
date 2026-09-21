@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Pencil,
   Trash2,
+  Copy,
   Check,
   X,
 } from "lucide-react";
@@ -31,6 +32,7 @@ interface ProjectItemProps {
   onSelect: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   canDelete: boolean;
 }
 
@@ -40,6 +42,7 @@ const ProjectItem = ({
   onSelect,
   onRename,
   onDelete,
+  onDuplicate,
   canDelete,
 }: ProjectItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -121,6 +124,16 @@ const ProjectItem = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
+            onDuplicate();
+          }}
+          className="p-1 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white"
+          title="Duplicate project"
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
             setIsEditing(true);
           }}
           className="p-1 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white"
@@ -156,6 +169,7 @@ export const ProjectSwitcher = () => {
     createProject,
     renameProject,
     deleteProject,
+    duplicateProject,
     switchProject,
   } = useEditor();
 
@@ -247,6 +261,10 @@ export const ProjectSwitcher = () => {
                 }}
                 onRename={(name) => renameProject(project.id, name)}
                 onDelete={() => deleteProject(project.id)}
+                onDuplicate={() => {
+                  duplicateProject(project.id);
+                  setIsOpen(false);
+                }}
                 canDelete={projects.length > 1}
               />
             ))}

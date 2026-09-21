@@ -9,7 +9,7 @@
  */
 export const STYLES = {
   /** Sidebar container */
-  sidebar: "w-72 shrink-0 border-r border-white/10 bg-[#141414] flex flex-col",
+  sidebar: "w-72 h-full fixed left-0 top-0 z-[100] border-r border-white/10 bg-[#141414] flex flex-col transition-transform duration-300 ease-in-out",
 
   /** Header section */
   header: "p-4 border-b border-white/10",
